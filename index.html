@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login Bot with Real-time Logs</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+      color: white;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      min-height: 100vh;
+      margin: 0;
+    }
+    h1 {
+      font-size: 28px;
+      margin-bottom: 10px;
+      color: #00ffff;
+    }
+    #usernameFields {
+      width: 100%;
+      max-width: 500px;
+      margin-bottom: 20px;
+    }
+    #usernameFields input {
+      width: 100%;
+      padding: 10px;
+      margin: 6px 0;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    .btn {
+      background-color: #00c9a7;
+      color: white;
+      padding: 12px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      margin: 6px;
+      transition: background-color 0.3s ease;
+    }
+    .btn:hover {
+      background-color: #009688;
+    }
+    #log {
+      width: 100%;
+      max-width: 500px;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 8px;
+      font-size: 14px;
+      white-space: pre-wrap;
+      max-height: 300px;
+      overflow-y: auto;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Login Bot with Real-time Logs</h1>
+
+  <div id="usernameFields">
+    <input type="text" placeholder="Username 1" />
+    <input type="text" placeholder="Username 2" />
+  </div>
+
+  <div>
+    <button class="btn" onclick="addField()">➕ Add Username</button>
+    <button class="btn" onclick="startBot()">🚀 Start Bot</button>
+  </div>
+
+  <div id="log"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+
+    function addField() {
+      const container = document.getElementById("usernameFields");
+      const input = document.createElement("input");
+      input.type = "text";
+      input.placeholder = `Username ${container.children.length + 1}`;
+      container.appendChild(input);
+    }
+
+    function log(message) {
+      const logBox = document.getElementById("log");
+      logBox.innerText += message + "\n";
+      logBox.scrollTop = logBox.scrollHeight;
+    }
+
+    function startBot() {
+      const inputs = document.querySelectorAll("#usernameFields input");
+      const usernames = [];
+      inputs.forEach(input => {
+        if (input.value.trim()) usernames.push(input.value.trim());
+      });
+
+      if (usernames.length === 0) {
+        log("❌ Please enter at least one username.");
+        return;
+      }
+
+      log("🚀 Bot started...\n");
+      socket.emit("startBot", usernames);
+    }
+
+    socket.on("botLog", message => {
+      log(message);
+    });
+
+    socket.on("botFinished", () => {
+      log("✅ Bot finished.");
+    });
+  </script>
+</body>
+</html>
